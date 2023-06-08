@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 def get_birthdays_per_week(users):
     # Определяем текущую дату
     today = datetime.now().date()
+    current_year = today.year
 
     # Определяем дату начала недели (понедельник)
     start_of_week = today - timedelta(days=today.weekday())
@@ -16,7 +17,7 @@ def get_birthdays_per_week(users):
     # Итерируемся по пользователям
     for user in users:
         name = user['name']
-        birthday = user['birthday'].date()
+        birthday = user['birthday'].replace(year=current_year).date()
 
         # Проверяем, что день рождения пользователя находится в текущей неделе
         if start_of_week <= birthday <= end_of_week:
@@ -29,4 +30,6 @@ def get_birthdays_per_week(users):
     # Выводим список именинников по дням недели
     for weekday, names in birthdays_per_day.items():
         print(f'{weekday}: {", ".join(names)}')
+
+
 
