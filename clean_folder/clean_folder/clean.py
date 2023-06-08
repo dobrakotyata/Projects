@@ -2,20 +2,7 @@ import os
 import shutil
 import re
 
-def delete_empty_folders(path):
-        for foldername, subfolders, filenames in os.walk(path, topdown=False):
-            # Игнорируем папки, которые не нужно удалять
-            if foldername.endswith('archives') or foldername.endswith('video') \
-                    or foldername.endswith('audio') or foldername.endswith('documents') \
-                    or foldername.endswith('images'):
-                continue
-            
-            # Проверяем, является ли папка пустой
-            if not os.listdir(foldername):
-                os.rmdir(foldername)
-                print(f"Folder {foldername} has been deleted.")
 if __name__ == "__main__":
-
 
     def delete_empty_folders(path):
             for foldername, subfolders, filenames in os.walk(path, topdown=False):
