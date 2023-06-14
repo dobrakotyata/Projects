@@ -1,3 +1,53 @@
+from collections import UserDict
+
+
+class Field:
+    def __init__(self):
+        self.value = None
+
+    def __str__(self):
+        return str(self.value)
+
+
+class Name(Field):
+    def __init__(self, name):
+        super().__init__()
+        self.value = name
+
+
+class Phone(Field):
+    def __init__(self, phone):
+        super().__init__()
+        self.value = phone
+
+
+class Record:
+    def __init__(self, name):
+        self.name = Name(name)
+        self.phones = []
+
+    def add_phone(self, phone):
+        new_phone = Phone(phone)
+        self.phones.append(new_phone)
+
+    def remove_phone(self, phone):
+        self.phones = [p for p in self.phones if p.value != phone]
+
+    def edit_phone(self, old_phone, new_phone):
+        for phone in self.phones:
+            if phone.value == old_phone:
+                phone.value = new_phone
+
+    def __str__(self):
+        phones = ", ".join(str(phone) for phone in self.phones)
+        return f"{self.name}: {phones}"
+
+
+class AddressBook(UserDict):
+    def add_record(self, record):
+        self.data[record.name.value] = record
+
+
 def input_error(func):
     def wrapper(*args, **kwargs):
         try:
@@ -11,32 +61,43 @@ def input_error(func):
     return wrapper
 
 
-contacts = {}
+address_book = AddressBook()
 
 
 @input_error
 def add_contact(name, phone):
-    contacts[name] = phone
+    if name not in address_book.data:
+        record = Record(name)
+        address_book.add_record(record)
+    else:
+        record = address_book.data[name]
+    record.add_phone(phone)
     return "Contact added successfully"
 
 
 @input_error
 def change_contact(name, phone):
-    contacts[name] = phone
-    return "Contact updated successfully"
+    if name in address_book.data:
+        record = address_book.data[name]
+        record.add_phone(phone)
+        return "Contact updated successfully"
+    raise KeyError
 
 
 @input_error
 def get_phone(name):
-    return contacts[name]
+    if name in address_book.data:
+        record = address_book.data[name]
+        return str(record)
+    raise KeyError
 
 
 def show_all_contacts():
-    if not contacts:
+    if not address_book.data:
         return "No contacts found"
     output = ""
-    for name, phone in contacts.items():
-        output += f"{name}: {phone}\n"
+    for record in address_book.values():
+        output += str(record) + "\n"
     return output.strip()
 
 
@@ -65,4 +126,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
