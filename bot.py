@@ -1,12 +1,21 @@
 from collections import UserDict
+from datetime import datetime, timedelta
 
 
 class Field:
     def __init__(self):
-        self.value = None
+        self._value = None
 
     def __str__(self):
-        return str(self.value)
+        return str(self._value)
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+        self._value = new_value
 
 
 class Name(Field):
@@ -20,11 +29,40 @@ class Phone(Field):
         super().__init__()
         self.value = phone
 
+    @Field.value.setter
+    def value(self, new_value):
+        if not self.is_valid_phone(new_value):
+            raise ValueError("Invalid phone number")
+        self._value = new_value
+
+    @staticmethod
+    def is_valid_phone(phone):
+        # Implement phone number validation logic here
+        return True
+
+
+class Birthday(Field):
+    def __init__(self, birthday):
+        super().__init__()
+        self.value = birthday
+
+    @Field.value.setter
+    def value(self, new_value):
+        if not self.is_valid_birthday(new_value):
+            raise ValueError("Invalid birthday")
+        self._value = new_value
+
+    @staticmethod
+    def is_valid_birthday(birthday):
+        # Implement birthday validation logic here
+        return True
+
 
 class Record:
-    def __init__(self, name):
+    def __init__(self, name, birthday=None):
         self.name = Name(name)
         self.phones = []
+        self.birthday = Birthday(birthday) if birthday else None
 
     def add_phone(self, phone):
         new_phone = Phone(phone)
@@ -38,6 +76,15 @@ class Record:
             if phone.value == old_phone:
                 phone.value = new_phone
 
+    def days_to_birthday(self):
+        if not self.birthday:
+            return None
+        today = datetime.now().date()
+        next_birthday = datetime(today.year, self.birthday.value.month, self.birthday.value.day).date()
+        if next_birthday < today:
+            next_birthday = datetime(today.year + 1, self.birthday.value.month, self.birthday.value.day).date()
+        return (next_birthday - today).days
+
     def __str__(self):
         phones = ", ".join(str(phone) for phone in self.phones)
         return f"{self.name}: {phones}"
@@ -47,6 +94,12 @@ class AddressBook(UserDict):
     def add_record(self, record):
         self.data[record.name.value] = record
 
+    def __iter__(self):
+        return iter(self.data.values())
+
+    def __next__(self):
+        raise StopIteration
+
 
 def input_error(func):
     def wrapper(*args, **kwargs):
@@ -54,8 +107,8 @@ def input_error(func):
             return func(*args, **kwargs)
         except KeyError:
             return "Enter user name"
-        except ValueError:
-            return "Give me name and phone please"
+        except ValueError as e:
+            return str(e)
         except IndexError:
             return "Enter user name"
     return wrapper
@@ -65,9 +118,9 @@ address_book = AddressBook()
 
 
 @input_error
-def add_contact(name, phone):
+def add_contact(name, phone, birthday=None):
     if name not in address_book.data:
-        record = Record(name)
+        record = Record(name, birthday)
         address_book.add_record(record)
     else:
         record = address_book.data[name]
@@ -96,7 +149,7 @@ def show_all_contacts():
     if not address_book.data:
         return "No contacts found"
     output = ""
-    for record in address_book.values():
+    for record in address_book:
         output += str(record) + "\n"
     return output.strip()
 
@@ -107,8 +160,9 @@ def main():
         if command == "hello":
             print("How can I help you?")
         elif command.startswith("add"):
-            _, name, phone = command.split()
-            print(add_contact(name, phone))
+            _, name, phone, *birthday = command.split()
+            birthday = datetime.strptime(' '.join(birthday), '%d-%m-%Y').date() if birthday else None
+            print(add_contact(name, phone, birthday))
         elif command.startswith("change"):
             _, name, phone = command.split()
             print(change_contact(name, phone))
