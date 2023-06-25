@@ -1,3 +1,4 @@
+import pickle
 from collections import UserDict
 from datetime import datetime, timedelta
 
@@ -100,6 +101,14 @@ class AddressBook(UserDict):
     def __next__(self):
         raise StopIteration
 
+    def save(self, file_path):
+        with open(file_path, 'wb') as file:
+            pickle.dump(self.data, file)
+
+    def load(self, file_path):
+        with open(file_path, 'rb') as file:
+            self.data = pickle.load(file)
+
 
 def input_error(func):
     def wrapper(*args, **kwargs):
@@ -111,6 +120,7 @@ def input_error(func):
             return str(e)
         except IndexError:
             return "Enter user name"
+
     return wrapper
 
 
@@ -154,6 +164,17 @@ def show_all_contacts():
     return output.strip()
 
 
+def search_contacts(query):
+    matching_contacts = []
+    for record in address_book:
+        if query in record.name.value or any(query in phone.value for phone in record.phones):
+            matching_contacts.append(str(record))
+    if matching_contacts:
+        return "\n".join(matching_contacts)
+    else:
+        return "No matching contacts found"
+
+
 def main():
     while True:
         command = input("Enter a command: ").lower()
@@ -171,6 +192,17 @@ def main():
             print(get_phone(name))
         elif command == "show all":
             print(show_all_contacts())
+        elif command.startswith("search"):
+            _, query = command.split()
+            print(search_contacts(query))
+        elif command.startswith("save"):
+            _, file_path = command.split()
+            address_book.save(file_path)
+            print(f"Address book saved to {file_path}")
+        elif command.startswith("load"):
+            _, file_path = command.split()
+            address_book.load(file_path)
+            print(f"Address book loaded from {file_path}")
         elif command in ["good bye", "close", "exit"]:
             print("Good bye!")
             break
@@ -180,3 +212,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
